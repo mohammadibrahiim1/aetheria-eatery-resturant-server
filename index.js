@@ -22,6 +22,7 @@ const client = new MongoClient(uri, {
 async function run() {
   const usersCollection = client.db("aetheria").collection("users");
   const productCollection = client.db("aetheria").collection("foods");
+  const menuCollection = client.db("aetheria").collection("menu");
   try {
     // Connect the client to the server	(optional starting in v4.7)
     await client.connect();
@@ -41,6 +42,14 @@ async function run() {
     app.get("/allProducts", async (req, res) => {
       const query = {};
       const cursor = productCollection.find(query);
+      const result = await cursor.toArray();
+      res.send(result);
+    });
+
+
+    app.get("/menu", async (req, res) => {
+      const query = {};
+      const cursor = menuCollection.find(query);
       const result = await cursor.toArray();
       res.send(result);
     });
