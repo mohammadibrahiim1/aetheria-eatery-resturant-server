@@ -46,7 +46,6 @@ async function run() {
       res.send(result);
     });
 
-
     app.get("/menu", async (req, res) => {
       const query = {};
       const cursor = menuCollection.find(query);
@@ -61,12 +60,12 @@ async function run() {
       // res.send(result);
       if (req.query.category) {
         const query = { category: req.query.category };
-        const result = await productCollection.find(query).toArray();
+        const result = await menuCollection.find(query).toArray();
         console.log(result);
         res.send(result);
       } else {
         const query = {};
-        const result = await productCollection.find(query).toArray();
+        const result = await menuCollection.find(query).toArray();
         res.send(result);
       }
     });
