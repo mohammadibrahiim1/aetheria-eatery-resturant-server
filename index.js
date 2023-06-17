@@ -1,13 +1,20 @@
 const express = require("express");
 const app = express();
 const cors = require("cors");
-const stripe = require("stripe")(
-  "sk_test_51MlpzGLrYWLOOZ8Ueo9lSKyjvBkUNZAQCqRDvVO5x1wiwu0MbJ2V6DeVFW7YHcoeCi0axInmbfmxCfIE5MrvaswE003sZXKmdG"
-);
+const stripe = require("./routes/stripe");
+// const Stripe = require("stripe");
+// const stripe = Stripe(
+//   "sk_test_51MlpzGLrYWLOOZ8Ueo9lSKyjvBkUNZAQCqRDvVO5x1wiwu0MbJ2V6DeVFW7YHcoeCi0axInmbfmxCfIE5MrvaswE003sZXKmdG"
+// );
+
 const port = process.env.PORT || 5000;
 
+app.use(cors());
+app.use(express.json());
+app.use('/stripe',stripe)
+
 const { MongoClient, ServerApiVersion } = require("mongodb");
-const { default: Stripe } = require("stripe");
+
 // const uri = 'mongodb://127.0.0.1:27017';
 const uri =
   "mongodb+srv://aetheria:7dbNVKMI0Y6RLjBH@cluster0.wuwpwwx.mongodb.net/?retryWrites=true&w=majority";
@@ -26,7 +33,7 @@ async function run() {
   const usersCollection = client.db("aetheria").collection("users");
   const productCollection = client.db("aetheria").collection("foods");
   const menuCollection = client.db("aetheria").collection("menu");
-  const paymentCollection = client.db("aetheria").collection("payments");
+  // const paymentCollection = client.db("aetheria").collection("payments");
   const checkoutCollection = client.db("aetheria").collection("checkout");
   try {
     // Connect the client to the server	(optional starting in v4.7)
@@ -63,7 +70,14 @@ async function run() {
     // add checkout form data
     app.post("/checkoutInfo", async (req, res) => {
       const checkout = req.body;
-      const result = await checkoutCollection.insertOne(checkout); 
+      const result = await checkoutCollection.insertOne(checkout);
+      res.send(result);
+    });
+
+    app.get("/checkoutInfo", async (req, res) => {
+      const query = {};
+      const cursor = checkoutCollection.find(query);
+      const result = await cursor.toArray();
       res.send(result);
     });
 
@@ -72,99 +86,43 @@ async function run() {
       if (req.query.category) {
         const query = { category: req.query.category };
         const result = await menuCollection.find(query).toArray();
-        console.log(result);
+        // console.log(result);
         res.send(result);
       } else {
         const query = {};
         const result = await menuCollection.find(query).toArray();
         res.send(result);
       }
-
-      // make payment with stripte
-      // app.post("/create-payment-intent", async (req, res) => {
-      //   const paymentData = req.body;
-      //   const totalPrice = paymentData.totalPrice;
-      //   const amount = totalPrice * 100;
-
-      //   const paymentIntent = await stripe.paymentIntents.create({
-      //     currency: "usd",
-      //     amount: amount,
-      //     payment_method_types: ["card"],
-      //   });
-      //   res.send({
-      //     clientSecret: paymentIntent.client_secret,
-      //   });
-      // });
-
-      // when user click on pay button then  store payments information in  collection in database
-      // app.post("/payments", async (req, res) => {
-      //   const payment = req.body;
-      //   const result = await paymentCollection.insertOne(payment);
-      //   const id = payment.bookingId;
-      //   const filter = { _id: new ObjectId(id) };
-      //   const updatedDocument = {
-      //     $set: {
-      //       paid: true,
-      //       transactionId: payment.transactionId,
-      //     },
-      //   };
-      //   const updatedResult = await bookingsCollection.updateOne(
-      //     filter,
-      //     updatedDocument
-      //   );
-      //   res.send();
-      //   res.send(result);
-
-      //   // ================
-      // });
-
-      // sk_test_51MlpzGLrYWLOOZ8Ueo9lSKyjvBkUNZAQCqRDvVO5x1wiwu0MbJ2V6DeVFW7YHcoeCi0axInmbfmxCfIE5MrvaswE003sZXKmdG
-
-      //       const express = require("express");
-      // const app = express();
-      // // This is a public sample test API key.
-      // // Don’t submit any personally identifiable information in requests made with this key.
-      // // Sign in to see your own test API key embedded in code samples.
-      // const stripe = require("stripe")('sk_test_4eC39HqLyjWDarjtT1zdp7dc');
-
-      // app.use(express.static("public"));
-      // app.use(express.json());
-
-      // const calculateOrderAmount = (items) => {
-      //   // Replace this constant with a calculation of the order's amount
-      //   // Calculate the order total on the server to prevent
-      //   // people from directly manipulating the amount on the client
-      //   return 1400;
-      // };
-
-      // app.post("/create-payment-intent", async (req, res) => {
-      //   const { items } = req.body;
-
-      //   // Create a PaymentIntent with the order amount and currency
-      //   const paymentIntent = await stripe.paymentIntents.create({
-      //     amount: calculateOrderAmount(items),
-      //     currency: "usd",
-      //     automatic_payment_methods: {
-      //       enabled: true,
-      //     },
-      //   });
-
-      //   res.send({
-      //     clientSecret: paymentIntent.client_secret,
-      //   });
-      // });
-
-      // app.listen(4242, () => console.log("Node server listening on port 4242!"));
     });
+
+    // payment method
+
+    // app.post("/create-checkout-session", async (req, res) => {
+    //   const session = await stripe.checkout.sessions.create({
+    //     line_items: [
+    //       {
+    //         price_data: {
+    //           product_data: {
+    //             name: "T-shirt",
+    //           },
+    //           unit_amount: 2000,
+    //         },
+    //         quantity: 1,
+    //       },
+    //     ],
+    //     mode: "payment",
+    //     success_url: "http://localhost:3000/checkout-success",
+    //     cancel_url: "http://localhost:3000/cart",
+    //   });
+
+    //   res.send({ url: session.url });
+    // });
   } finally {
     // Ensures that the client will close when you finish/error
     // await client.close();
   }
 }
 run().catch(console.dir);
-
-app.use(cors());
-app.use(express.json());
 
 app.get("/", (req, res) => {
   res.send("simple node server running");
