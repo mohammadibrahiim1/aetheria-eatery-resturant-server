@@ -68,11 +68,11 @@ async function run() {
     });
 
     // add checkout form data
-    app.post("/checkoutInfo", async (req, res) => {
-      const checkout = req.body;
-      const result = await checkoutCollection.insertOne(checkout);
-      res.send(result);
-    });
+    // app.post("/checkoutInfo", async (req, res) => {
+    //   const checkout = req.body;
+    //   const result = await checkoutCollection.insertOne(checkout);
+    //   res.send(result);
+    // });
 
     app.get("/checkoutInfo", async (req, res) => {
       const query = {};
