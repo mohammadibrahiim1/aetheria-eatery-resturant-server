@@ -53,8 +53,8 @@ router.post("/create-checkout-session", async (req, res) => {
     //   },
     // ],
     mode: "payment",
-    success_url: "http://localhost:3000/shop",
-    cancel_url: "http://localhost:3000/cart",
+    success_url: "https://resturant-website-server.vercel.app/shop",
+    cancel_url: "https://resturant-website-server.vercel.app/cart",
   });
 
   res.send({ url: session.url });
