@@ -1,9 +1,9 @@
 const express = require("express");
 const Stripe = require("stripe");
 // const stripe = Stripe()
-const stripe = Stripe(
-  "sk_test_51MlpzGLrYWLOOZ8Ueo9lSKyjvBkUNZAQCqRDvVO5x1wiwu0MbJ2V6DeVFW7YHcoeCi0axInmbfmxCfIE5MrvaswE003sZXKmdG"
-);
+require("dotenv").config();
+const stripe = Stripe(process.env.STRIPE_SECRET_KEY);
+// console.log(stripe);
 
 const router = express.Router();
 
@@ -53,8 +53,8 @@ router.post("/create-checkout-session", async (req, res) => {
     //   },
     // ],
     mode: "payment",
-    success_url: "https://resturant-website-server.vercel.app/shop",
-    cancel_url: "https://resturant-website-server.vercel.app/cart",
+    success_url: "https://etheria-eatery.web.app/shop",
+    cancel_url: "https://etheria-eatery.web.app/cart",
   });
 
   res.send({ url: session.url });
