@@ -199,11 +199,26 @@ async function run() {
       console.log(result);
     });
 
+    // get all bookings data
+    app.get("/bookings", async (req, res) => {
+      const query = {};
+      const booking = await bookingsCollection.find(query).toArray();
+      res.send(booking);
+    });
+
     // get all users
     app.get("/users", async (req, res) => {
       const query = {};
       const users = await usersCollection.find(query).toArray();
       res.send(users);
+    });
+
+    // get admin user  by email
+    app.get("/users/admin/:email", async (req, res) => {
+      const email = req.params.email;
+      const query = { email };
+      const user = await usersCollection.findOne(query);
+      res.send({ isAdmin: user?.role === "admin" });
     });
 
     // make an user admin
@@ -213,10 +228,10 @@ async function run() {
       const options = { upsert: true };
       const updatedDoc = {
         $set: {
-          role: "admin",
+          role: "admin",  
         },
       };
-      const result = await usersCollection.updatedDoc(
+      const result = await usersCollection.updateOne(
         filter,
         updatedDoc,
         options
