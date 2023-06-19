@@ -35,6 +35,8 @@ async function run() {
     .collection("bookingOptions");
   const checkoutCollection = client.db("aetheria").collection("checkout");
   const bookingsCollection = client.db("aetheria").collection("bookings");
+  const ourTeamCollection = client.db("aetheria").collection("team");
+
   try {
     // Connect the client to the server	(optional starting in v4.7)
     await client.connect();
@@ -175,6 +177,13 @@ async function run() {
       }
     });
 
+    // get ourTeam data
+    app.get("/team", async (req, res) => {
+      const query = {};
+      const ourTeam = await ourTeamCollection.find(query).toArray();
+      res.send(ourTeam);
+    });
+
     // booking data
 
     app.post("/bookings", async (req, res) => {
@@ -228,7 +237,7 @@ async function run() {
       const options = { upsert: true };
       const updatedDoc = {
         $set: {
-          role: "admin",  
+          role: "admin",
         },
       };
       const result = await usersCollection.updateOne(
