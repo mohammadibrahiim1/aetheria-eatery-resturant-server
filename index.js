@@ -1,13 +1,15 @@
 const express = require("express");
 const app = express();
 const cors = require("cors");
-const stripe = require("./routes/stripe");
+// const stripe = require("./routes/stripe");
+
+
 
 const port = process.env.PORT || 5000;
 
 app.use(cors());
 app.use(express.json());
-app.use("/stripe", stripe);
+// app.use("/stripe", stripe);
 
 require("dotenv").config();
 
@@ -34,12 +36,15 @@ async function run() {
     .db("aetheria")
     .collection("bookingOptions");
   const checkoutCollection = client.db("aetheria").collection("checkout");
+  const checkoutPostDataCollection = client
+    .db("aetheria")
+    .collection("checkoutInfo");
   const bookingsCollection = client.db("aetheria").collection("bookings");
   const ourTeamCollection = client.db("aetheria").collection("team");
 
   try {
     // Connect the client to the server	(optional starting in v4.7)
-     client.connect();
+    client.connect();
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
     console.log(
@@ -149,12 +154,14 @@ async function run() {
       res.send(result);
     });
 
-    // add checkout form data
-    // app.post("/checkoutInfo", async (req, res) => {
-    //   const checkout = req.body;
-    //   const result = await checkoutCollection.insertOne(checkout);
-    //   res.send(result);
-    // });
+  
+
+    app.post("/checkoutPostInfo", async (req, res) => {
+      const checkoutData = req.body;
+      console.log(checkoutData);
+      const result = await checkoutPostDataCollection.insertOne(checkoutData);
+      res.send(result);
+    });
 
     app.get("/checkoutInfo", async (req, res) => {
       const query = {};
@@ -185,7 +192,6 @@ async function run() {
     });
 
     // booking data
-
     app.post("/bookings", async (req, res) => {
       const booking = req.body;
       console.log(booking);
@@ -247,6 +253,8 @@ async function run() {
       );
       res.send(result);
     });
+
+  
   } finally {
   }
 }
