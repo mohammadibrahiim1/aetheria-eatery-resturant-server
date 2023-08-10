@@ -1,17 +1,15 @@
+require("dotenv").config();
 const express = require("express");
 const app = express();
 const cors = require("cors");
-// const stripe = require("./routes/stripe");
 
-
+const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
+console.log(stripe);
 
 const port = process.env.PORT || 5000;
 
 app.use(cors());
 app.use(express.json());
-// app.use("/stripe", stripe);
-
-require("dotenv").config();
 
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 
@@ -32,26 +30,59 @@ async function run() {
   const usersCollection = client.db("aetheria").collection("users");
   const productCollection = client.db("aetheria").collection("foods");
   const menuCollection = client.db("aetheria").collection("menu");
-  const bookingOptionsCollection = client
-    .db("aetheria")
-    .collection("bookingOptions");
+  const bookingOptionsCollection = client.db("aetheria").collection("bookingOptions");
   const checkoutCollection = client.db("aetheria").collection("checkout");
-  const checkoutPostDataCollection = client
-    .db("aetheria")
-    .collection("checkoutInfo");
+  const orderInfoCollection = client.db("aetheria").collection("orderInfo");
   const bookingsCollection = client.db("aetheria").collection("bookings");
   const ourTeamCollection = client.db("aetheria").collection("team");
+  const paymentsCollection = client.db("aetheria").collection("payments");
 
   try {
     // Connect the client to the server	(optional starting in v4.7)
     client.connect();
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
-    console.log(
-      "Pinged your deployment. You successfully connected to MongoDB!"
-    );
+    console.log("Pinged your deployment. You successfully connected to MongoDB!");
 
     //  get bookingslots
+
+    // payment
+
+    app.post("/create-payment-intent", async (req, res) => {
+      const orderInfo = req.body;
+      const price = orderInfo.totalPrice;
+      const amount = price * 100;
+      const paymentIntent = await stripe.paymentIntents.create({
+        currency: "usd",
+        amount: amount,
+        payment_method_types: ["card"],
+      });
+
+      res.send({ clientSecret: paymentIntent.client_Secret });
+    });
+
+    app.post("/payments", async (req, res) => {
+      const payment = req.body;
+      const result = await paymentsCollection.insertOne(payment);
+      const id = payment.bookingId;
+      const filter = { _id: ObjectId(id) };
+      const updatedDoc = {
+        $set: {
+          paid: true,
+          transactionId: payment.transactionId,
+        },
+      };
+      const updatedResult = await orderInfoCollection.updateOne(filter, updatedDoc);
+      console.log(updatedResult);
+      res.send(result);
+    });
+
+    app.get("/v2/payments", async (req, res) => {
+      const query = {};
+      const cursor = paymentsCollection.find(query);
+      const result = await cursor.toArray();
+      res.send(result);
+    });
 
     app.get("/bookingOptions", async (req, res) => {
       const date = req.query.date;
@@ -59,20 +90,14 @@ async function run() {
       const query = {};
       const options = await bookingOptionsCollection.find(query).toArray();
       const bookingQuery = { bookingDate: date };
-      const alreadyBooked = await bookingsCollection
-        .find(bookingQuery)
-        .toArray();
+      const alreadyBooked = await bookingsCollection.find(bookingQuery).toArray();
 
       options.forEach((option) => {
-        const optionBooked = alreadyBooked.filter(
-          (book) => book.table === option.name
-        );
+        const optionBooked = alreadyBooked.filter((book) => book.table === option.name);
         const bookedSlots = optionBooked.map((book) => book.slot);
 
         // remove the slots for every table
-        const remainingSlots = option.slots.filter(
-          (slot) => !bookedSlots.includes(slot)
-        );
+        const remainingSlots = option.slots.filter((slot) => !bookedSlots.includes(slot));
 
         option.slots = remainingSlots;
         // console.log(option.name, remainingSlots.length);
@@ -154,16 +179,37 @@ async function run() {
       res.send(result);
     });
 
-  
-
-    app.post("/checkoutPostInfo", async (req, res) => {
+    app.post("/checkout", async (req, res) => {
       const checkoutData = req.body;
       console.log(checkoutData);
-      const result = await checkoutPostDataCollection.insertOne(checkoutData);
+      const result = await checkoutCollection.insertOne(checkoutData);
       res.send(result);
     });
 
-    app.get("/checkoutInfo", async (req, res) => {
+    app.post("/v1/orders", async (req, res) => {
+      const orderInfo = req.body;
+      console.log(orderInfo);
+      const result = await orderInfoCollection.insertOne(orderInfo);
+      res.send(result);
+    });
+
+    // get  all orders
+    app.get("/orders", async (req, res) => {
+      const query = req.query.email;
+      const cursor = orderInfoCollection.find(query);
+      const result = await cursor.toArray();
+      res.send(result);
+    });
+
+    // get order data by id
+    app.get("/orders/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const booking = await orderInfoCollection.findOne(query);
+      res.send(booking);
+    });
+
+    app.get("/v2/checkout", async (req, res) => {
       const query = {};
       const cursor = checkoutCollection.find(query);
       const result = await cursor.toArray();
@@ -246,15 +292,9 @@ async function run() {
           role: "admin",
         },
       };
-      const result = await usersCollection.updateOne(
-        filter,
-        updatedDoc,
-        options
-      );
+      const result = await usersCollection.updateOne(filter, updatedDoc, options);
       res.send(result);
     });
-
-  
   } finally {
   }
 }
