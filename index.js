@@ -4,7 +4,7 @@ const app = express();
 const cors = require("cors");
 
 const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
-console.log(stripe);
+// console.log(stripe);
 
 const port = process.env.PORT || 5000;
 
@@ -32,7 +32,7 @@ async function run() {
   const menuCollection = client.db("aetheria").collection("menu");
   const bookingOptionsCollection = client.db("aetheria").collection("bookingOptions");
   const checkoutCollection = client.db("aetheria").collection("checkout");
-  const orderInfoCollection = client.db("aetheria").collection("orderInfo");
+  const myOrdersCollection = client.db("aetheria").collection("myOrders");
   const bookingsCollection = client.db("aetheria").collection("bookings");
   const ourTeamCollection = client.db("aetheria").collection("team");
   const paymentsCollection = client.db("aetheria").collection("payments");
@@ -49,16 +49,17 @@ async function run() {
     // payment
 
     app.post("/create-payment-intent", async (req, res) => {
-      const orderInfo = req.body;
-      const price = orderInfo.totalPrice;
+      const myOrders = req.body;
+      const price = myOrders.totalPrice;
       const amount = price * 100;
       const paymentIntent = await stripe.paymentIntents.create({
         currency: "usd",
         amount: amount,
         payment_method_types: ["card"],
       });
+      console.log({ paymentIntent });
 
-      res.send({ clientSecret: paymentIntent.client_Secret });
+      res.send({ clientSecret: paymentIntent.client_secret });
     });
 
     app.post("/payments", async (req, res) => {
@@ -189,14 +190,14 @@ async function run() {
     app.post("/v1/orders", async (req, res) => {
       const orderInfo = req.body;
       console.log(orderInfo);
-      const result = await orderInfoCollection.insertOne(orderInfo);
+      const result = await myOrdersCollection.insertOne(orderInfo);
       res.send(result);
     });
 
     // get  all orders
     app.get("/orders", async (req, res) => {
       const query = req.query.email;
-      const cursor = orderInfoCollection.find(query);
+      const cursor = myOrdersCollection.find(query);
       const result = await cursor.toArray();
       res.send(result);
     });
@@ -205,7 +206,7 @@ async function run() {
     app.get("/orders/:id", async (req, res) => {
       const id = req.params.id;
       const query = { _id: new ObjectId(id) };
-      const booking = await orderInfoCollection.findOne(query);
+      const booking = await myOrdersCollection.findOne(query);
       res.send(booking);
     });
 
