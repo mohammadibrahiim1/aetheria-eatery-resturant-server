@@ -66,14 +66,14 @@ async function run() {
       const payment = req.body;
       const result = await paymentsCollection.insertOne(payment);
       const id = payment.bookingId;
-      const filter = { _id: ObjectId(id) };
+      const filter = { _id: new ObjectId(id) };
       const updatedDoc = {
         $set: {
           paid: true,
           transactionId: payment.transactionId,
         },
       };
-      const updatedResult = await orderInfoCollection.updateOne(filter, updatedDoc);
+      const updatedResult = await myOrdersCollection.updateOne(filter, updatedDoc);
       console.log(updatedResult);
       res.send(result);
     });
@@ -159,10 +159,27 @@ async function run() {
 
     // post user data to database
     app.post("/users", async (req, res) => {
-      const users = req.body;
-      console.log(users);
-      const result = await usersCollection.insertOne(users);
-      res.send(result);
+      try {
+        // const { name, email, image } = req.body;
+        const users = req.body;
+        const query = {
+          email: users.email,
+        };
+        // const existingUser = await usersCollection.findOne({ email });
+        const existingUser = await usersCollection.findOne(query);
+        if (existingUser) {
+          return res.status(409).json({ message: "user data already exists " });
+        }
+        await usersCollection.insertOne(
+          users
+          // { name, email, image }
+        );
+        res.status(201).json({ message: "user data saved successfully" });
+      } catch (error) {
+        res.status(500).json({ message: "error saving user data" });
+      }
+      // const result = await usersCollection.insertOne(users);
+      // res.send(result);
     });
 
     // get all food  from collection
@@ -194,7 +211,7 @@ async function run() {
       res.send(result);
     });
 
-    // get  all orders
+    // get  my all  orders
     app.get("/orders", async (req, res) => {
       const query = req.query.email;
       const cursor = myOrdersCollection.find(query);
@@ -202,12 +219,20 @@ async function run() {
       res.send(result);
     });
 
-    // get order data by id
+    // get order data by id for payment
     app.get("/orders/:id", async (req, res) => {
       const id = req.params.id;
       const query = { _id: new ObjectId(id) };
       const booking = await myOrdersCollection.findOne(query);
       res.send(booking);
+    });
+
+    // cancel your order
+    app.delete("/v1/order/:id", async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: new ObjectId(id) };
+      const result = await myOrdersCollection.deleteOne(filter);
+      res.send(result);
     });
 
     app.get("/v2/checkout", async (req, res) => {
