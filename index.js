@@ -263,6 +263,7 @@ async function run() {
       res.send(ourTeam);
     });
 
+
     // booking data
     app.post("/bookings", async (req, res) => {
       const booking = req.body;
@@ -286,6 +287,8 @@ async function run() {
       console.log(result);
     });
 
+
+
     // get all bookings data
     app.get("/bookings", async (req, res) => {
       const query = {};
@@ -293,12 +296,14 @@ async function run() {
       res.send(booking);
     });
 
+
     // get all users
     app.get("/users", async (req, res) => {
       const query = {};
       const users = await usersCollection.find(query).toArray();
       res.send(users);
     });
+    
 
     // get admin user  by email
     app.get("/users/admin/:email", async (req, res) => {
