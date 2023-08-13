@@ -51,7 +51,7 @@ async function run() {
     app.post("/create-payment-intent", async (req, res) => {
       const myOrders = req.body;
       const price = myOrders.totalPrice;
-      const amount = price * 100;
+      const amount = Math.round(price * 100);
       const paymentIntent = await stripe.paymentIntents.create({
         currency: "usd",
         amount: amount,
@@ -245,15 +245,39 @@ async function run() {
     // get data by category and filter data by category
     app.get("/category", async (req, res) => {
       if (req.query.category) {
-        const query = { category: req.query.category };
-        const result = await menuCollection.find(query).toArray();
-
+        const category = req.query.category;
+        const order = req.query.order === "desc" ? -1 : 1;
+        const result = await menuCollection.find({ category }).sort({ price: order }).toArray();
+        // const result = filterData.sort();
         res.send(result);
       } else {
         const query = {};
-        const result = await menuCollection.find(query).toArray();
+        const order = req.query.order === "desc" ? -1 : 1;
+        const result = await menuCollection.find(query).sort({ price: order }).toArray();
+        // const sortedData = result.toArray();
         res.send(result);
       }
+      // if ((category, order)) {
+      // const category = req.query.category;
+      // const order = req.query.order === "desc" ? -1 : 1;
+      // const filterData = category ? await menuCollection.find({ category }).toArray() : [];
+      // res.send(filterData);
+
+      // const result = filterData || [].sort((a, b) => (a.price - b.price) * order);
+      // res.send(result);
+      // }
+      // else if (req.query.order) {
+      //   const order = req.query.order === "desc" ? -1 : 1;
+      //   const sortData =
+      //     // await menuCollection.find(result)
+      //     filterData.sort({ price: order }).toArray();
+      //   res.send(sortData);
+      // }
+      // else {
+      //   const query = {};
+      //   const result = await menuCollection.find(query).toArray();
+      //   res.send(result);
+      // }
     });
 
     // get ourTeam data
@@ -262,7 +286,6 @@ async function run() {
       const ourTeam = await ourTeamCollection.find(query).toArray();
       res.send(ourTeam);
     });
-
 
     // booking data
     app.post("/bookings", async (req, res) => {
@@ -287,8 +310,6 @@ async function run() {
       console.log(result);
     });
 
-
-
     // get all bookings data
     app.get("/bookings", async (req, res) => {
       const query = {};
@@ -296,14 +317,12 @@ async function run() {
       res.send(booking);
     });
 
-
     // get all users
     app.get("/users", async (req, res) => {
       const query = {};
       const users = await usersCollection.find(query).toArray();
       res.send(users);
     });
-    
 
     // get admin user  by email
     app.get("/users/admin/:email", async (req, res) => {
