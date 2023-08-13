@@ -351,7 +351,7 @@ async function run() {
 run().catch(console.dir);
 
 app.get("/", (req, res) => {
-  res.send("simple node server running");
+  res.send("aetheria eatery web-server is running");
 });
 
 app.listen(port, () => {
