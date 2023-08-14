@@ -191,10 +191,22 @@ async function run() {
     });
     // get menu data
     app.get("/menu", async (req, res) => {
+      console.log(req.query);
+      const page = parseInt(req.query.page) || 0;
+      const limit = parseInt(req.query.limit) || 8;
+      const skip = page * limit;
       const query = {};
-      const cursor = menuCollection.find(query);
-      const result = await cursor.toArray();
+      // const cursor = menuCollection.find(query);
+      const result = await menuCollection.find().skip(skip).limit(limit).toArray();
       res.send(result);
+    });
+
+    app.get("/totalItems", async (req, res) => {
+      const result = await menuCollection.estimatedDocumentCount();
+      // const query = {};
+      // const cursor = menuCollection.find(query);
+      // const result = await cursor.toArray();
+      res.send({ totalItems: result });
     });
 
     app.post("/checkout", async (req, res) => {
