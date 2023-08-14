@@ -189,23 +189,20 @@ async function run() {
       const result = await cursor.toArray();
       res.send(result);
     });
-    // get menu data
+
+    // get menu data and display menu data by pagination
     app.get("/menu", async (req, res) => {
       console.log(req.query);
       const page = parseInt(req.query.page) || 0;
       const limit = parseInt(req.query.limit) || 8;
       const skip = page * limit;
-      const query = {};
-      // const cursor = menuCollection.find(query);
       const result = await menuCollection.find().skip(skip).limit(limit).toArray();
       res.send(result);
     });
 
+    // get food items number
     app.get("/totalItems", async (req, res) => {
       const result = await menuCollection.estimatedDocumentCount();
-      // const query = {};
-      // const cursor = menuCollection.find(query);
-      // const result = await cursor.toArray();
       res.send({ totalItems: result });
     });
 
