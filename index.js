@@ -208,7 +208,7 @@ async function run() {
 
     app.post("/checkout", async (req, res) => {
       const checkoutData = req.body;
-      console.log(checkoutData);
+      // console.log(checkoutData);
       const result = await checkoutCollection.insertOne(checkoutData);
       res.send(result);
     });
@@ -222,10 +222,17 @@ async function run() {
 
     // get  my all  orders
     app.get("/orders", async (req, res) => {
-      const query = req.query.email;
+      let query = {};
+      // console.log(query);
+      if (req.query.email) {
+        query = {
+          email: req.query.email,
+        };
+      }
       const cursor = myOrdersCollection.find(query);
-      const result = await cursor.toArray();
-      res.send(result);
+      // console.log(cursor);
+      const orders = await cursor.toArray();
+      res.send(orders);
     });
 
     // get order data by id for payment
@@ -248,7 +255,7 @@ async function run() {
       const query = {};
       const cursor = checkoutCollection.find(query);
       const result = await cursor.toArray();
-      res.send(result);
+      res.send(result); 
     });
 
     // get data by category and filter data by category
