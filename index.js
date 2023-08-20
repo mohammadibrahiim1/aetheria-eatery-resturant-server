@@ -192,7 +192,6 @@ async function run() {
 
     // get menu data and display menu data by pagination
     app.get("/menu", async (req, res) => {
-      console.log(req.query);
       const page = parseInt(req.query.page) || 0;
       const limit = parseInt(req.query.limit) || 8;
       const skip = page * limit;
@@ -215,12 +214,19 @@ async function run() {
 
     app.post("/v1/orders", async (req, res) => {
       const orderInfo = req.body;
-      console.log(orderInfo);
       const result = await myOrdersCollection.insertOne(orderInfo);
       res.send(result);
     });
 
-    // get  my all  orders
+    //  get all orders
+    app.get("/v1/orders", async (req, res) => {
+      const query = {};
+      const cursor = myOrdersCollection.find(query);
+      const result = await cursor.toArray();
+      res.send(result);
+    });
+
+    // get   all  orders by email
     app.get("/orders", async (req, res) => {
       let query = {};
       // console.log(query);
@@ -255,7 +261,7 @@ async function run() {
       const query = {};
       const cursor = checkoutCollection.find(query);
       const result = await cursor.toArray();
-      res.send(result); 
+      res.send(result);
     });
 
     // get data by category and filter data by category
